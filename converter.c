@@ -7,6 +7,10 @@ int width, height;
 png_byte color_type;
 png_byte bit_depth;
 png_bytep *row_pointers;
+enum block_types {
+  EMPTY_BLOCK,
+  SOLID_BLOCK
+};
 
 void read_png_file(char *filename) {
   FILE *fp = fopen(filename, "rb");
@@ -66,14 +70,34 @@ void read_png_file(char *filename) {
   fclose(fp);
 }
 
+int get_block_type(png_bytep px) {
+  if (px[3] == 0) {
+    return EMPTY_BLOCK;
+  }
+
+  if (px[0] == 0 && px[1] == 0 && px[2] == 0 && px[3] == 255) {
+    return SOLID_BLOCK;
+  }
+
+  return EMPTY_BLOCK;
+}
+
 void process_png_file() {
   for(int y = 0; y < height; y++) {
     png_bytep row = row_pointers[y];
     for(int x = 0; x < width; x++) {
       png_bytep px = &(row[x * 4]);
-      // Do something awesome for each pixel here...
-      printf("%4d, %4d = RGBA(%3d, %3d, %3d, %3d)\n", x, y, px[0], px[1], px[2], px[3]);
+      switch(get_block_type(px)) {
+        case SOLID_BLOCK:
+          printf("1");
+          break;
+        case EMPTY_BLOCK:
+          printf("0");
+          break;
+      }
+      printf(", ");
     }
+    printf("\n");
   }
 }
 
